@@ -29,10 +29,10 @@ def init_db():
                 category  TEXT,
                 tags      TEXT,          -- comma-separated
                 data      TEXT,          -- JSON blob; any extra fields you want
-                num1      REAL,          -- generic numeric field (e.g. price, calories)
-                num2      REAL,          -- generic numeric field (e.g. rating, weight)
-                num1_label TEXT,         -- human label for num1 (e.g. "calories")
-                num2_label TEXT          -- human label for num2 (e.g. "protein_g")
+                num1      REAL,          -- numeric field 
+                num2      REAL,          -- numeric field 
+                num1_label TEXT,         -- human label for num1 
+                num2_label TEXT          -- human label for num2
             )
         """)
         db.execute("CREATE INDEX IF NOT EXISTS idx_name     ON items(name)")
@@ -49,18 +49,6 @@ def health():
 
 @app.route("/search")
 def search():
-    """
-    GET /search
-    Query params (all optional):
-      q          – keyword, matched against name and tags
-      category   – exact category match
-      min_num1   – lower bound on num1 (e.g. min_calories)
-      max_num1   – upper bound on num1
-      min_num2   – lower bound on num2
-      max_num2   – upper bound on num2
-      limit      – max results (default 50)
-      offset     – pagination offset (default 0)
-    """
     start = time.time()
 
     q        = request.args.get("q", "").strip().lower()
@@ -103,7 +91,7 @@ def search():
                 sql + f" ORDER BY name LIMIT {limit} OFFSET {offset}", params
             ).fetchall()
     except Exception as e:
-        # Fault tolerance: return empty results, not a crash
+        # Fault tolerance: return empty results
         return jsonify({
             "results": [],
             "count": 0,
@@ -123,9 +111,9 @@ def search():
     })
 
 
+#returns available categories
 @app.route("/search/filters")
 def list_filters():
-    """GET /search/filters — returns available categories and numeric field labels."""
     try:
         with get_db() as db:
             categories = [r[0] for r in db.execute(
@@ -146,13 +134,9 @@ def list_filters():
     })
 
 
+#add a new searchable item
 @app.route("/items", methods=["POST"])
 def add_item():
-    """
-    POST /items — add a new searchable item.
-    Body (JSON):
-      name, category, tags, data, num1, num2, num1_label, num2_label
-    """
     body = request.get_json(force=True)
     required = ["name"]
     if not all(k in body for k in required):
@@ -160,8 +144,6 @@ def add_item():
 
     with get_db() as db:
         cur = db.execute(
-            """INSERT INTO items (name, category, tags, data, num1, num2, num1_label, num2_label)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 body.get("name"),
                 body.get("category"),
